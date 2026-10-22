@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a0f17">
+<title>SHADOW SCANNER 5.0</title>
+<style>
+:root{color-scheme:dark;--bg:#0a0f17;--panel:#111a27;--line:#263548;--text:#e8f0fb;--muted:#9aabc0;--green:#56f2b1;--amber:#ffd166;--red:#ff6b7a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#142438 0,var(--bg) 55%);color:var(--text);font:16px system-ui,Arial,sans-serif}
+main{max-width:900px;margin:auto;padding:20px 14px 40px}.hero,.panel,.stat{background:rgba(17,26,39,.96);border:1px solid var(--line);border-radius:16px}
+.hero{padding:22px;margin-bottom:14px}.eyebrow{color:var(--green);font-size:12px;letter-spacing:2px;font-weight:800}.hero h1{margin:7px 0;font-size:clamp(25px,6vw,38px)}.hero p,.muted{color:var(--muted);line-height:1.5}.pill{display:inline-block;border:1px solid #287b65;color:var(--green);border-radius:999px;padding:5px 10px;font-size:12px}
+.panel{padding:16px;margin:14px 0}.panel h2{font-size:17px;margin:0 0 12px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}input[type=file],input[type=text],textarea{width:100%;background:#0b121c;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit}textarea{min-height:150px;resize:vertical;margin-top:10px}.field{flex:1;min-width:200px}label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}button{border:0;border-radius:10px;padding:12px 15px;font:inherit;font-weight:750;cursor:pointer;background:var(--green);color:#07140f}button.secondary{background:#263548;color:var(--text)}button:active{transform:scale(.99)}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{padding:14px}.stat strong{display:block;font-size:25px}.stat span{font-size:12px;color:var(--muted)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#080d14;border:1px solid var(--line);padding:14px;border-radius:10px;min-height:70px;font:13px/1.55 ui-monospace,monospace}.good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}footer{font-size:12px;color:var(--muted);text-align:center;padding:16px}
+@media(min-width:650px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<main>
+<section class="hero">
+<div class="eyebrow">LOCAL SECURITY TOOLKIT</div>
+<h1>SHADOW SCANNER <span class="good">5.0</span></h1>
+<p>Text and network-log analyzer. Select a log file or paste its contents, then run a local analysis in your browser.</p>
+<span class="pill">OFFLINE-FRIENDLY · BROWSER-BASED</span>
+</section>
+<section class="panel">
+<h2>01 / Input source</h2>
+<label for="file">Choose a text log file</label>
+<input id="file" type="file" accept=".txt,.log,.csv,.md,text/plain">
+<div class="row" style="margin-top:10px"><button id="read" class="secondary">Read selected file</button><span id="fileStatus" class="muted">No file loaded yet.</span></div>
+<label for="source">Or paste log text here</label>
+<textarea id="source" placeholder="Example: 2026-10-22 login failed from 192.168.1.20"></textarea>
+</section>
+<section class="panel">
+<h2>02 / Keyword search</h2>
+<label for="words">Keywords separated by commas</label>
+<input id="words" type="text" value="failed, denied, error, unauthorized, timeout">
+<p class="muted">Search is case-insensitive. Results are clues to review, not proof of an attack.</p>
+</section>
+<section class="panel">
+<h2>03 / Run analysis</h2>
+<div class="row"><button id="scan">Analyze logs</button><button id="save" class="secondary">Save report</button><button id="clear" class="secondary">Clear</button></div>
+</section>
+<section class="panel">
+<h2>04 / Summary</h2>
+<div class="stats">
+<div class="stat"><strong id="lineCount">0</strong><span>Lines analyzed</span></div>
+<div class="stat"><strong id="ipCount">0</strong><span>IPv4 occurrences</span></div>
+<div class="stat"><strong id="failedCount">0</strong><span>Failure indicators</span></div>
+<div class="stat"><strong id="keywordCount">0</strong><span>Keyword matches</span></div>
+</div>
+</section>
+<section class="panel">
+<h2>05 / Analysis report</h2>
+<pre id="results">Your report will appear here after analysis.</pre>
+</section>
+<footer>SHADOW SCANNER 5.0 · Processes selected text locally in this browser. It does not scan devices or networks.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let report='';
+const source=$('source');
+$('read').addEventListener('click',async()=>{
+ const f=$('file').files[0];
+ if(!f){alert('Please choose a text log file first.');return;}
+ try{source.value=await f.text();$('fileStatus').textContent='Loaded: '+f.name; }
+ catch(e){alert('Could not read this file. Try a plain text file.');}
+});
+function validIPv4(s){const p=s.split('.');return p.length===4&&p.every(x=>/^\d{1,3}$/.test(x)&&Number(x)>=0&&Number(x)<=255);}
+$('scan').addEventListener('click',()=>{
+ const text=source.value;
+ if(!text.trim()){alert('Choose a file or paste log text first.');return;}
+ const lines=text.split(/\r?\n/);
+ const keys=[...new Set($('words').value.split(',').map(s=>s.trim()).filter(Boolean))];
+ const ipRe=/\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
+ const ips={}; const keyCounts={}; keys.forEach(k=>keyCounts[k]=0);
+ const ipLines=[]; const failLines=[]; const matchLines=[];
+ let ipTotal=0, failures=0, keywordTotal=0;
+ const failRe=/failed|failure|denied|unauthori[sz]ed|invalid password|login error|authentication error/i;
+ lines.forEach((line,i)=>{
+  const found=line.match(ipRe)||[];
+  found.forEach(ip=>{if(validIPv4(ip)){ips[ip]=(ips[ip]||0)+1;ipTotal++;}});
+  if(found.some(validIPv4))ipLines.push(`Line ${i+1}: ${line}`);
+  if(failRe.test(line)){failures++;failLines.push(`Line ${i+1}: ${line}`);}
+  const matched=keys.filter(k=>line.toLocaleLowerCase().includes(k.toLocaleLowerCase()));
+  if(matched.length){matchLines.push(`Line ${i+1} [${matched.join(', ')}]: ${line}`);matched.forEach(k=>{keyCounts[k]++;keywordTotal++;});}
+ });
+ const out=['SHADOW SCANNER 5.0 REPORT','Generated locally in your browser','',`Lines analyzed: ${lines.length}`,`IPv4 occurrences: ${ipTotal}`,`Unique valid IPv4 addresses: ${Object.keys(ips).length}`,`Failure indicators: ${failures}`,`Keyword matches (keyword-by-keyword): ${keywordTotal}`,'','IP ADDRESS SUMMARY',...(Object.keys(ips).length?Object.entries(ips).sort((a,b)=>b[1]-a[1]).map(([ip,n])=>`${ip}: ${n} occurrence(s)`):['No valid IPv4 addresses found.']),'','FAILURE INDICATORS',...(failLines.length?failLines:['No failure indicators found.']),'','KEYWORD COUNTS',...(keys.length?keys.map(k=>`${k}: ${keyCounts[k]} occurrence(s)`):['No keywords entered.']),'','MATCHING LINES',...(matchLines.length?matchLines:['No matching lines found.']),'','Note: These patterns are indicators only and do not prove malicious activity.'];
+ report=out.join('\n');$('results').textContent=report;
+ $('lineCount').textContent=lines.length;$('ipCount').textContent=ipTotal;$('failedCount').textContent=failures;$('keywordCount').textContent=keywordTotal;
+});
+$('save').addEventListener('click',()=>{
+ if(!report){alert('Run an analysis first.');return;}
+ const blob=new Blob([report],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download='shadow_scanner_report.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+$('clear').addEventListener('click',()=>{source.value='';$('file').value='';$('fileStatus').textContent='No file loaded yet.';report='';$('results').textContent='Your report will appear here after analysis.';['lineCount','ipCount','failedCount','keywordCount'].forEach(id=>$(id).textContent='0');});
+</script>
+</body>
+</html>
