@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a0f17">
+<title>SHADOW SCANNER 5.1</title>
+<style>
+:root{color-scheme:dark;--bg:#0a0f17;--panel:#111a27;--panel2:#0b121c;--panel3:#080d14;--line:#263548;--text:#e8f0fb;--muted:#9aabc0;--accent:#56f2b1;--accentText:#07140f;--secondary:#263548;--amber:#ffd166;--red:#ff6b7a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#142438 0,var(--bg) 55%);color:var(--text);font:16px system-ui,Arial,sans-serif;transition:background .2s,color .2s}
+main{max-width:900px;margin:auto;padding:16px 12px 36px}.hero,.panel,.stat{background:rgba(17,26,39,.96);border:1px solid var(--line);border-radius:16px}
+.hero{padding:20px;margin-bottom:14px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:2px;font-weight:800}.hero h1{margin:7px 0;font-size:clamp(25px,6vw,38px)}.hero p,.muted{color:var(--muted);line-height:1.5}.pill{display:inline-block;border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:5px 10px;font-size:12px}
+.panel{padding:15px;margin:14px 0}.panel h2{font-size:17px;margin:0 0 12px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}input[type=file],input[type=text],textarea,select{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit}textarea{min-height:150px;resize:vertical;margin-top:10px}label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}button{border:0;border-radius:10px;padding:12px 15px;font:inherit;font-weight:750;cursor:pointer;background:var(--accent);color:var(--accentText)}button.secondary{background:var(--secondary);color:var(--text)}button.iconbtn{padding:10px 12px;background:var(--secondary);color:var(--text);font-size:19px}button:active{transform:scale(.99)}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{padding:13px}.stat strong{display:block;font-size:25px}.stat span{font-size:12px;color:var(--muted)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--panel3);border:1px solid var(--line);padding:14px;border-radius:10px;min-height:70px;font:13px/1.55 ui-monospace,monospace}.good{color:var(--accent)}footer{font-size:12px;color:var(--muted);text-align:center;padding:16px}
+.overlay{display:none;position:fixed;inset:0;background:#000b;z-index:20;padding:18px;overflow:auto;align-items:center;justify-content:center}.overlay.open{display:flex}.settings{width:min(100%,430px);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 20px 70px #0008}.settings-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.settings h2{margin:0}.settings label{margin-top:16px}.color-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:8px}.swatch{padding:8px 3px;background:var(--secondary);color:var(--text);border:2px solid transparent;font-size:12px}.swatch .dot{display:block;width:22px;height:22px;border-radius:50%;margin:0 auto 6px;background:var(--swatch)}.swatch[aria-pressed=true]{border-color:var(--text)}.settings-actions{display:flex;gap:8px;margin-top:18px}.settings-actions button{flex:1}
+@media(min-width:650px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<main>
+<section class="hero">
+ <div class="topbar"><div class="eyebrow" data-i18n="eyebrow">LOCAL SECURITY TOOLKIT</div><button class="iconbtn" id="openSettings" aria-label="Settings" title="Settings">⚙️</button></div>
+ <h1>SHADOW SCANNER <span class="good">5.1</span></h1>
+ <p data-i18n="intro">Text and log analyzer. Select a log file or paste its contents, then run a local analysis in your browser.</p>
+ <span class="pill" data-i18n="pill">OFFLINE-FRIENDLY · BROWSER-BASED</span>
+</section>
+<section class="panel">
+<h2 data-i18n="inputTitle">01 / Input source</h2>
+<label for="file" data-i18n="chooseFile">Choose a text log file</label>
+<input id="file" type="file" accept=".txt,.log,.csv,.md,text/plain">
+<div class="row" style="margin-top:10px"><button id="read" class="secondary" data-i18n="readFile">Read selected file</button><span id="fileStatus" class="muted" data-i18n="noFile">No file loaded yet.</span></div>
+<label for="source" data-i18n="pasteLabel">Or paste log text here</label>
+<textarea id="source" data-i18n-placeholder="placeholder" placeholder="Example: 2026-10-22 login failed from 192.168.1.20"></textarea>
+</section>
+<section class="panel">
+<h2 data-i18n="keywordTitle">02 / Keyword search</h2>
+<label for="words" data-i18n="keywordLabel">Keywords separated by commas</label>
+<input id="words" type="text" value="failed, denied, error, unauthorized, timeout">
+<p class="muted" data-i18n="keywordHelp">Search is case-insensitive. Results are clues to review, not proof of an attack.</p>
+</section>
+<section class="panel">
+<h2 data-i18n="runTitle">03 / Run analysis</h2>
+<div class="row"><button id="scan" data-i18n="analyze">Analyze logs</button><button id="save" class="secondary" data-i18n="save">Save report</button><button id="clear" class="secondary" data-i18n="clear">Clear</button></div>
+</section>
+<section class="panel">
+<h2 data-i18n="summaryTitle">04 / Summary</h2>
+<div class="stats">
+<div class="stat"><strong id="lineCount">0</strong><span data-i18n="lines">Lines analyzed</span></div>
+<div class="stat"><strong id="ipCount">0</strong><span data-i18n="ips">IPv4 occurrences</span></div>
+<div class="stat"><strong id="failedCount">0</strong><span data-i18n="failures">Failure indicators</span></div>
+<div class="stat"><strong id="keywordCount">0</strong><span data-i18n="matches">Keyword matches</span></div>
+</div>
+</section>
+<section class="panel">
+<h2 data-i18n="reportTitle">05 / Analysis report</h2>
+<pre id="results" data-i18n="emptyReport">Your report will appear here after analysis.</pre>
+</section>
+<footer data-i18n="footer">SHADOW SCANNER 5.1 · Processes selected text locally in this browser. It does not scan devices or networks.</footer>
+</main>
+
+<div class="overlay" id="settingsOverlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+ <section class="settings">
+  <div class="settings-head"><h2 id="settingsTitle" data-i18n="settingsTitle">⚙️ Settings</h2><button class="iconbtn" id="closeSettings" aria-label="Close">✕</button></div>
+  <label for="themeMode" data-i18n="modeLabel">Display mode</label>
+  <select id="themeMode"><option value="night" data-i18n="nightMode">Night mode</option><option value="day" data-i18n="dayMode">Day mode</option></select>
+  <label for="language" data-i18n="languageLabel">Interface language</label>
+  <select id="language"><option value="en">English</option><option value="ar">العربية</option><option value="fr">Français</option></select>
+  <label data-i18n="colorLabel">Interface accent color</label>
+  <div class="color-grid" id="accentColors">
+   <button class="swatch" data-color="#56f2b1" data-text="#07140f" aria-pressed="true"><span class="dot" style="--swatch:#56f2b1"></span><span data-i18n="green">Green</span></button>
+   <button class="swatch" data-color="#35a7ff" data-text="#061421" aria-pressed="false"><span class="dot" style="--swatch:#35a7ff"></span><span data-i18n="blue">Blue</span></button>
+   <button class="swatch" data-color="#b36bff" data-text="#170725" aria-pressed="false"><span class="dot" style="--swatch:#b36bff"></span><span data-i18n="purple">Purple</span></button>
+   <button class="swatch" data-color="#ff5252" data-text="#250707" aria-pressed="false"><span class="dot" style="--swatch:#ff5252"></span><span data-i18n="red">Red</span></button>
+   <button class="swatch" data-color="#f0b84b" data-text="#211605" aria-pressed="false"><span class="dot" style="--swatch:#f0b84b"></span><span data-i18n="gold">Gold</span></button>
+  </div>
+  <label data-i18n="fontColorLabel">Text color</label>
+  <div class="color-grid" id="fontColors">
+   <button class="swatch font-swatch" data-font-color="#e8f0fb" aria-pressed="true"><span class="dot" style="--swatch:#e8f0fb"></span><span data-i18n="fontWhite">White</span></button>
+   <button class="swatch font-swatch" data-font-color="#7dd3fc" aria-pressed="false"><span class="dot" style="--swatch:#7dd3fc"></span><span data-i18n="fontSky">Sky</span></button>
+   <button class="swatch font-swatch" data-font-color="#86efac" aria-pressed="false"><span class="dot" style="--swatch:#86efac"></span><span data-i18n="fontMint">Mint</span></button>
+   <button class="swatch font-swatch" data-font-color="#f9a8d4" aria-pressed="false"><span class="dot" style="--swatch:#f9a8d4"></span><span data-i18n="fontPink">Pink</span></button>
+   <button class="swatch font-swatch" data-font-color="#fcd34d" aria-pressed="false"><span class="dot" style="--swatch:#fcd34d"></span><span data-i18n="fontGold">Gold</span></button>
+  </div>
+  <div class="settings-actions"><button id="resetSettings" class="secondary" data-i18n="reset">Reset defaults</button><button id="doneSettings" data-i18n="done">Done</button></div>
+  <p class="muted" style="font-size:12px" data-i18n="saveSettingsHelp">Your choices are saved on this device in this browser.</p>
+ </section>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let report='';
+const source=$('source');
+const translations={
+ en:{eyebrow:'LOCAL SECURITY TOOLKIT',intro:'Text and log analyzer. Select a log file or paste its contents, then run a local analysis in your browser.',pill:'OFFLINE-FRIENDLY · BROWSER-BASED',inputTitle:'01 / Input source',chooseFile:'Choose a text log file',readFile:'Read selected file',noFile:'No file loaded yet.',pasteLabel:'Or paste log text here',placeholder:'Example: 2026-10-22 login failed from 192.168.1.20',keywordTitle:'02 / Keyword search',keywordLabel:'Keywords separated by commas',keywordHelp:'Search is case-insensitive. Results are clues to review, not proof of an attack.',runTitle:'03 / Run analysis',analyze:'Analyze logs',save:'Save report',clear:'Clear',summaryTitle:'04 / Summary',lines:'Lines analyzed',ips:'IPv4 occurrences',failures:'Failure indicators',matches:'Keyword matches',reportTitle:'05 / Analysis report',emptyReport:'Your report will appear here after analysis.',footer:'SHADOW SCANNER 5.1 · Processes selected text locally in this browser. It does not scan devices or networks.',settingsTitle:'⚙️ Settings',languageLabel:'Interface language',modeLabel:'Display mode',nightMode:'Night mode',dayMode:'Day mode',colorLabel:'Change interface color',fontColorLabel:'Text color',fontWhite:'White',fontSky:'Sky',fontMint:'Mint',fontPink:'Pink',fontGold:'Gold',green:'Green',blue:'Blue',purple:'Purple',red:'Red',gold:'Gold',reset:'Reset defaults',done:'Done',saveSettingsHelp:'Your choices are saved on this device in this browser.',chooseFirst:'Please choose a text log file first.',readError:'Could not read this file. Try a plain text file.',needText:'Choose a file or paste log text first.',needReport:'Run an analysis first.',loaded:'Loaded: ',reportHeading:'SHADOW SCANNER 5.1 REPORT',generated:'Generated locally in your browser',linesLabel:'Lines analyzed',ipTotal:'IPv4 occurrences',uniqueIps:'Unique valid IPv4 addresses',failureLabel:'Failure indicators',keywordMatches:'Keyword matches (keyword-by-keyword)',ipSummary:'IP ADDRESS SUMMARY',noIps:'No valid IPv4 addresses found.',failureHeading:'FAILURE INDICATORS',noFailures:'No failure indicators found.',keywordCounts:'KEYWORD COUNTS',noKeywords:'No keywords entered.',matchingLines:'MATCHING LINES',noMatches:'No matching lines found.',note:'Note: These patterns are indicators only and do not prove malicious activity.',occurrence:'occurrence(s)',line:'Line',loadedName:'Loaded: '},
+ ar:{eyebrow:'مجموعة أدوات الأمن المحلي',intro:'أداة لتحليل النصوص والسجلات. اختر ملف سجل أو الصق محتواه ثم حلّله محليًا في المتصفح.',pill:'تعمل دون اتصال · عبر المتصفح',inputTitle:'01 / مصدر الإدخال',chooseFile:'اختر ملف سجل نصي',readFile:'قراءة الملف المحدد',noFile:'لم يتم تحميل ملف بعد.',pasteLabel:'أو الصق نص السجل هنا',placeholder:'مثال: 2026-10-22 فشل تسجيل الدخول من 192.168.1.20',keywordTitle:'02 / البحث بالكلمات المفتاحية',keywordLabel:'افصل الكلمات بفواصل',keywordHelp:'البحث لا يميّز بين الأحرف الكبيرة والصغيرة. النتائج مؤشرات للمراجعة وليست دليلًا قاطعًا على هجوم.',runTitle:'03 / تنفيذ التحليل',analyze:'تحليل السجلات',save:'حفظ التقرير',clear:'مسح',summaryTitle:'04 / الملخص',lines:'عدد الأسطر المحللة',ips:'مرات ظهور IPv4',failures:'مؤشرات الفشل',matches:'تطابقات الكلمات',reportTitle:'05 / تقرير التحليل',emptyReport:'سيظهر التقرير هنا بعد التحليل.',footer:'SHADOW SCANNER 5.1 · يعالج النص المحدد محليًا في المتصفح. لا يفحص الأجهزة أو الشبكات.',settingsTitle:'⚙️ الإعدادات',languageLabel:'لغة الواجهة',modeLabel:'مظهر الواجهة',nightMode:'الوضع الليلي',dayMode:'الوضع العادي',colorLabel:'تغيير لون الواجهة',fontColorLabel:'لون الخط',fontWhite:'أبيض',fontSky:'سماوي',fontMint:'نعناعي',fontPink:'وردي',fontGold:'ذهبي',green:'أخضر',blue:'أزرق',purple:'بنفسجي',red:'أحمر',gold:'ذهبي',reset:'إعادة الافتراضي',done:'تم',saveSettingsHelp:'تُحفظ اختياراتك على هذا الجهاز داخل هذا المتصفح.',chooseFirst:'اختر ملف سجل نصيًا أولًا.',readError:'تعذرت قراءة الملف. جرّب ملفًا نصيًا عاديًا.',needText:'اختر ملفًا أو الصق نص السجل أولًا.',needReport:'نفّذ التحليل أولًا.',loaded:'تم التحميل: ',reportHeading:'تقرير SHADOW SCANNER 5.1',generated:'تم إنشاؤه محليًا في المتصفح',linesLabel:'عدد الأسطر المحللة',ipTotal:'مرات ظهور IPv4',uniqueIps:'عناوين IPv4 صالحة وفريدة',failureLabel:'مؤشرات الفشل',keywordMatches:'تطابقات الكلمات المفتاحية',ipSummary:'ملخص عناوين IP',noIps:'لم يتم العثور على عناوين IPv4 صالحة.',failureHeading:'مؤشرات الفشل',noFailures:'لم يتم العثور على مؤشرات فشل.',keywordCounts:'عدد الكلمات المفتاحية',noKeywords:'لم تُدخل كلمات مفتاحية.',matchingLines:'الأسطر المطابقة',noMatches:'لم يتم العثور على أسطر مطابقة.',note:'ملاحظة: هذه الأنماط مؤشرات فقط ولا تثبت وجود نشاط ضار.',occurrence:'مرة/مرات',line:'السطر',loadedName:'تم التحميل: '},
+ fr:{eyebrow:'BOÎTE À OUTILS DE SÉCURITÉ LOCALE',intro:'Analyseur de texte et de journaux. Sélectionnez un fichier ou collez son contenu, puis lancez une analyse locale dans le navigateur.',pill:'FONCTIONNE HORS LIGNE · NAVIGATEUR',inputTitle:'01 / Source des données',chooseFile:'Choisir un fichier journal texte',readFile:'Lire le fichier sélectionné',noFile:'Aucun fichier chargé.',pasteLabel:'Ou collez le journal ici',placeholder:'Exemple : 2026-10-22 échec de connexion depuis 192.168.1.20',keywordTitle:'02 / Recherche de mots-clés',keywordLabel:'Mots-clés séparés par des virgules',keywordHelp:'La recherche ignore la casse. Les résultats sont des indices à examiner, pas une preuve d’attaque.',runTitle:'03 / Lancer l’analyse',analyze:'Analyser les journaux',save:'Enregistrer le rapport',clear:'Effacer',summaryTitle:'04 / Résumé',lines:'Lignes analysées',ips:'Occurrences IPv4',failures:'Indicateurs d’échec',matches:'Correspondances',reportTitle:'05 / Rapport d’analyse',emptyReport:'Le rapport apparaîtra ici après l’analyse.',footer:'SHADOW SCANNER 5.1 · Traite le texte localement dans ce navigateur. Ne scanne pas les appareils ni les réseaux.',settingsTitle:'⚙️ Paramètres',languageLabel:'Langue de l’interface',modeLabel:'Mode d’affichage',nightMode:'Mode nuit',dayMode:'Mode clair',colorLabel:'Changer la couleur de l’interface',fontColorLabel:'Couleur du texte',fontWhite:'Blanc',fontSky:'Ciel',fontMint:'Menthe',fontPink:'Rose',fontGold:'Or',green:'Vert',blue:'Bleu',purple:'Violet',red:'Rouge',gold:'Or',reset:'Réinitialiser',done:'Terminé',saveSettingsHelp:'Vos choix sont enregistrés sur cet appareil dans ce navigateur.',chooseFirst:'Veuillez d’abord choisir un fichier journal texte.',readError:'Impossible de lire ce fichier. Essayez un fichier texte simple.',needText:'Choisissez un fichier ou collez du texte.',needReport:'Lancez d’abord une analyse.',loaded:'Chargé : ',reportHeading:'RAPPORT SHADOW SCANNER 5.1',generated:'Généré localement dans votre navigateur',linesLabel:'Lignes analysées',ipTotal:'Occurrences IPv4',uniqueIps:'Adresses IPv4 valides uniques',failureLabel:'Indicateurs d’échec',keywordMatches:'Correspondances des mots-clés',ipSummary:'RÉSUMÉ DES ADRESSES IP',noIps:'Aucune adresse IPv4 valide trouvée.',failureHeading:'INDICATEURS D’ÉCHEC',noFailures:'Aucun indicateur d’échec trouvé.',keywordCounts:'NOMBRE DE MOTS-CLÉS',noKeywords:'Aucun mot-clé saisi.',matchingLines:'LIGNES CORRESPONDANTES',noMatches:'Aucune ligne correspondante.',note:'Remarque : ces motifs sont des indicateurs et ne prouvent pas une activité malveillante.',occurrence:'occurrence(s)',line:'Ligne',loadedName:'Chargé : '}
+};
+function t(k){return (translations[$('language').value]||translations.en)[k]||translations.en[k]||k}
+function applyLanguage(){
+ const lang=$('language').value;document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+ document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n)});
+ document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>el.placeholder=t(el.dataset.i18nPlaceholder));
+ $('openSettings').title=t('settingsTitle');$('openSettings').setAttribute('aria-label',t('settingsTitle'));
+}
+function setColor(color,textColor,save=true){
+ const root=document.documentElement;
+ root.style.setProperty('--accent',color);root.style.setProperty('--accentText',textColor);
+ const themes={
+  '#56f2b1':{bg:'#071710',panel:'#10271e',panel2:'#0a1d15',panel3:'#06130d',line:'#24523e',secondary:'#1b3d2e',muted:'#a5c8b5'},
+  '#35a7ff':{bg:'#071521',panel:'#10263a',panel2:'#0a1b2b',panel3:'#06111c',line:'#244c6d',secondary:'#1b3c59',muted:'#a6c8e8'},
+  '#b36bff':{bg:'#150b20',panel:'#251333',panel2:'#1b0e27',panel3:'#100719',line:'#4a2863',secondary:'#3b2050',muted:'#cfb3e8'},
+  '#ff5252':{bg:'#1c090d',panel:'#2b1218',panel2:'#210b11',panel3:'#160609',line:'#5a2630',secondary:'#48202a',muted:'#e8b0b7'},
+  '#f0b84b':{bg:'#1a1408',panel:'#2a2110',panel2:'#211909',panel3:'#151005',line:'#574522',secondary:'#463719',muted:'#dfc995'}
+ };
+ const theme=themes[color]||themes['#56f2b1'];
+ root.style.setProperty('--bg',theme.bg);root.style.setProperty('--panel',theme.panel);root.style.setProperty('--panel2',theme.panel2);root.style.setProperty('--panel3',theme.panel3);root.style.setProperty('--line',theme.line);root.style.setProperty('--secondary',theme.secondary);root.style.setProperty('--muted',theme.muted);
+ document.body.style.background=`radial-gradient(ellipse at top, ${theme.panel} 0, ${theme.bg} 65%)`;
+ document.querySelectorAll('#accentColors .swatch').forEach(b=>b.setAttribute('aria-pressed',b.dataset.color===color?'true':'false'));
+ if(save){try{localStorage.setItem('shadowScannerColor',color);localStorage.setItem('shadowScannerColorText',textColor)}catch(e){}}
+}
+function setFontColor(color,save=true){
+ document.documentElement.style.setProperty('--text',color);
+ document.querySelectorAll('.font-swatch').forEach(b=>b.setAttribute('aria-pressed',b.dataset.fontColor===color?'true':'false'));
+ if(save){try{localStorage.setItem('shadowScannerFontColor',color)}catch(e){}}
+}
+function setMode(mode,save=true){
+ const root=document.documentElement;
+ const day=mode==='day';
+ root.style.colorScheme=day?'light':'dark';
+ if(day){
+  root.style.setProperty('--bg','#f1f5f9');root.style.setProperty('--panel','#ffffff');root.style.setProperty('--panel2','#f8fafc');root.style.setProperty('--panel3','#ffffff');root.style.setProperty('--line','#cbd5e1');root.style.setProperty('--secondary','#e2e8f0');root.style.setProperty('--text','#172033');root.style.setProperty('--muted','#526174');
+  document.body.style.background='linear-gradient(135deg,#f8fafc,#e2e8f0)';
+ }else{
+  const color=localStorage.getItem('shadowScannerColor')||'#56f2b1';
+  const themes={'#56f2b1':{bg:'#071710',panel:'#10271e',panel2:'#0a1d15',panel3:'#06130d',line:'#24523e',secondary:'#1b3d2e',muted:'#a5c8b5'},'#35a7ff':{bg:'#071521',panel:'#10263a',panel2:'#0a1b2b',panel3:'#06111c',line:'#244c6d',secondary:'#1b3c59',muted:'#a6c8e8'},'#b36bff':{bg:'#150b20',panel:'#251333',panel2:'#1b0e27',panel3:'#100719',line:'#4a2863',secondary:'#3b2050',muted:'#cfb3e8'},'#ff5252':{bg:'#1c090d',panel:'#2b1218',panel2:'#210b11',panel3:'#160609',line:'#5a2630',secondary:'#48202a',muted:'#e8b0b7'},'#f0b84b':{bg:'#1a1408',panel:'#2a2110',panel2:'#211909',panel3:'#151005',line:'#574522',secondary:'#463719',muted:'#dfc995'}};
+  const th=themes[color]||themes['#56f2b1'];Object.entries(th).forEach(([k,v])=>root.style.setProperty('--'+k,v));
+  document.body.style.background=`radial-gradient(ellipse at top, ${th.panel} 0, ${th.bg} 65%)`;
+  const savedFont=localStorage.getItem('shadowScannerFontColor');root.style.setProperty('--text',savedFont||'#e8f0fb');
+ }
+ if(save){try{localStorage.setItem('shadowScannerMode',mode)}catch(e){}}
+}
+function saveLanguage(){try{localStorage.setItem('shadowScannerLanguage',$('language').value)}catch(e){}}
+try{
+ const lang=localStorage.getItem('shadowScannerLanguage');if(lang&&translations[lang])$('language').value=lang;
+ const color=localStorage.getItem('shadowScannerColor');const tc=localStorage.getItem('shadowScannerColorText');
+ if(color)setColor(color,tc||'#07140f',false);
+ const fontColor=localStorage.getItem('shadowScannerFontColor');if(fontColor)setFontColor(fontColor,false);
+}catch(e){}
+const savedMode=(()=>{try{return localStorage.getItem('shadowScannerMode')||'night'}catch(e){return 'night'}})();$('themeMode').value=savedMode;setMode(savedMode,false);
+applyLanguage();
+$('themeMode').addEventListener('change',()=>setMode($('themeMode').value));
+$('language').addEventListener('change',()=>{applyLanguage();saveLanguage()});
+$('openSettings').addEventListener('click',()=>{$('settingsOverlay').classList.add('open')});
+function closeSettings(){$('settingsOverlay').classList.remove('open')}
+$('closeSettings').addEventListener('click',closeSettings);$('doneSettings').addEventListener('click',closeSettings);
+$('settingsOverlay').addEventListener('click',e=>{if(e.target===$('settingsOverlay'))closeSettings()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSettings()});
+document.querySelectorAll('#accentColors .swatch').forEach(b=>b.addEventListener('click',()=>{setColor(b.dataset.color,b.dataset.text);setMode($('themeMode').value)}));
+document.querySelectorAll('.font-swatch').forEach(b=>b.addEventListener('click',()=>setFontColor(b.dataset.fontColor)));
+$('resetSettings').addEventListener('click',()=>{ $('language').value='en';applyLanguage();saveLanguage();setColor('#56f2b1','#07140f');setFontColor('#e8f0fb');$('themeMode').value='night';setMode('night');});
+$('read').addEventListener('click',async()=>{
+ const f=$('file').files[0];if(!f){alert(t('chooseFirst'));return;}
+ try{source.value=await f.text();$('fileStatus').textContent=t('loadedName')+f.name;}
+ catch(e){alert(t('readError'));}
+});
+function validIPv4(s){const p=s.split('.');return p.length===4&&p.every(x=>/^\d{1,3}$/.test(x)&&Number(x)>=0&&Number(x)<=255);}
+$('scan').addEventListener('click',()=>{
+ const text=source.value;if(!text.trim()){alert(t('needText'));return;}
+ const lines=text.split(/\r?\n/);
+ const keys=[...new Set($('words').value.split(',').map(s=>s.trim()).filter(Boolean))];
+ const ipRe=/\b(?:\d{1,3}\.){3}\d{1,3}\b/g;const ips={};const keyCounts={};keys.forEach(k=>keyCounts[k]=0);
+ const ipLines=[];const failLines=[];const matchLines=[];let ipTotal=0,failures=0,keywordTotal=0;
+ const failRe=/failed|failure|denied|unauthori[sz]ed|invalid password|login error|authentication error/i;
+ lines.forEach((line,i)=>{
+  const found=line.match(ipRe)||[];found.forEach(ip=>{if(validIPv4(ip)){ips[ip]=(ips[ip]||0)+1;ipTotal++;}});
+  if(found.some(validIPv4))ipLines.push(`${t('line')} ${i+1}: ${line}`);
+  if(failRe.test(line)){failures++;failLines.push(`${t('line')} ${i+1}: ${line}`);}
+  const matched=keys.filter(k=>line.toLocaleLowerCase().includes(k.toLocaleLowerCase()));
+  if(matched.length){matchLines.push(`${t('line')} ${i+1} [${matched.join(', ')}]: ${line}`);matched.forEach(k=>{keyCounts[k]++;keywordTotal++;});}
+ });
+ const out=[t('reportHeading'),t('generated'),'',
+ `${t('linesLabel')}: ${lines.length}`,`${t('ipTotal')}: ${ipTotal}`,`${t('uniqueIps')}: ${Object.keys(ips).length}`,`${t('failureLabel')}: ${failures}`,`${t('keywordMatches')}: ${keywordTotal}`,'',
+ t('ipSummary'),...(Object.keys(ips).length?Object.entries(ips).sort((a,b)=>b[1]-a[1]).map(([ip,n])=>`${ip}: ${n} ${t('occurrence')}`):[t('noIps')]),'',
+ t('failureHeading'),...(failLines.length?failLines:[t('noFailures')]),'',
+ t('keywordCounts'),...(keys.length?keys.map(k=>`${k}: ${keyCounts[k]} ${t('occurrence')}`):[t('noKeywords')]),'',
+ t('matchingLines'),...(matchLines.length?matchLines:[t('noMatches')]),'',
+ t('note')];
+ report=out.join('\n');$('results').textContent=report;
+ $('lineCount').textContent=lines.length;$('ipCount').textContent=ipTotal;$('failedCount').textContent=failures;$('keywordCount').textContent=keywordTotal;
+});
+$('save').addEventListener('click',()=>{
+ if(!report){alert(t('needReport'));return;}
+ const blob=new Blob([report],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download='shadow_scanner_report.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+$('clear').addEventListener('click',()=>{source.value='';$('file').value='';$('fileStatus').textContent=t('noFile');report='';$('results').textContent=t('emptyReport');['lineCount','ipCount','failedCount','keywordCount'].forEach(id=>$(id).textContent='0');});
+</script>
+</body>
+</html>
